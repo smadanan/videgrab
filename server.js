@@ -18,7 +18,8 @@ app.post("/api/info", (req, res) => {
   if (!url) return res.status(400).json({ error: "URL is required" });
 
   const args = ["--dump-json", "--no-playlist", "--no-warnings", url];
-  const proc = spawn("yt-dlp", args);
+  const ytdlp = process.env.YTDLP_PATH || "/usr/local/bin/yt-dlp";
+  const proc = spawn(ytdlp, args);
 
   let stdout = "";
   let stderr = "";
@@ -85,7 +86,8 @@ app.get("/api/download", (req, res) => {
 
   args.push(url);
 
-  const proc = spawn("yt-dlp", args);
+const ytdlp = process.env.YTDLP_PATH || "/usr/local/bin/yt-dlp";
+const proc = spawn(ytdlp, args);
 
   proc.stdout.pipe(res);
 
