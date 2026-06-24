@@ -2,7 +2,9 @@
 set -e
 
 echo "📦 Installing yt-dlp..."
-pip install yt-dlp
+pip install -U yt-dlp
+echo "yt-dlp path: $(which yt-dlp)"
+yt-dlp --version
 
 echo "📦 Installing dependencies..."
 npm install
