@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: vidgrab
+    env: node
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+    plan: free
