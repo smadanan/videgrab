@@ -3,6 +3,7 @@ const { spawn, execSync } = require("child_process");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
+const os = require("os");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -90,41 +91,77 @@ app.get("/api/download", (req, res) => {
 
   const selectedFormat = format || "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best";
   const fileExt = ext || "mp4";
-  const fileName = (title || "video").replace(/[^a-z0-9_\-\s]/gi, "_").trim() + "." + fileExt;
+  const safeTitle = (title || "video").replace(/[^a-z0-9_\-\s]/gi, "_").trim();
+  const fileName = `${safeTitle}.${fileExt}`;
   const isAudio = fileExt === "mp3";
 
-  res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-  res.setHeader("Content-Type", isAudio ? "audio/mpeg" : "video/mp4");
+  // Use a unique temp file path
+  const tmpFile = path.join(os.tmpdir(), `vidgrab_${Date.now()}.${fileExt}`);
 
   const args = [
     "-f", selectedFormat,
     "--no-playlist",
     "--no-warnings",
+    "--merge-output-format", fileExt,
+    "-o", tmpFile,
   ];
 
   if (hasCookies) args.push("--cookies", COOKIES_PATH);
   if (PROXY_URL) args.push("--proxy", PROXY_URL);
-
-  args.push("--merge-output-format", isAudio ? "mp3" : "mp4", "-o", "-");
-
   if (isAudio) args.push("--extract-audio", "--audio-format", "mp3");
 
   args.push(url);
 
+  console.log("[yt-dlp] downloading to temp:", tmpFile);
+
   const ytdlp = process.env.YTDLP_PATH || "yt-dlp";
   const proc = spawn(ytdlp, args);
 
-  proc.stdout.pipe(res);
-
-  proc.stderr.on("data", (d) => console.error("[yt-dlp]", d.toString()));
-
-  proc.on("close", (code) => {
-    if (code !== 0 && !res.headersSent) {
-      res.status(500).json({ error: "Download failed." });
-    }
+  let stderr = "";
+  proc.stderr.on("data", (d) => {
+    stderr += d.toString();
+    console.error("[yt-dlp]", d.toString());
   });
 
-  req.on("close", () => proc.kill("SIGTERM"));
+  proc.on("close", (code) => {
+    if (code !== 0) {
+      console.error("[yt-dlp download error]", stderr);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Download failed. " + stderr });
+      }
+      // Cleanup temp file if exists
+      if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
+      return;
+    }
+
+    // Check file exists and has size
+    if (!fs.existsSync(tmpFile)) {
+      return res.status(500).json({ error: "Output file not found after download." });
+    }
+
+    const stat = fs.statSync(tmpFile);
+    console.log(`[yt-dlp] download complete, file size: ${(stat.size / 1024 / 1024).toFixed(2)} MB`);
+
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+    res.setHeader("Content-Type", isAudio ? "audio/mpeg" : "video/mp4");
+    res.setHeader("Content-Length", stat.size);
+
+    // Stream file to browser then delete
+    const fileStream = fs.createReadStream(tmpFile);
+    fileStream.pipe(res);
+
+    fileStream.on("close", () => {
+      fs.unlink(tmpFile, (err) => {
+        if (err) console.error("[cleanup error]", err);
+        else console.log("[cleanup] temp file deleted:", tmpFile);
+      });
+    });
+  });
+
+  req.on("close", () => {
+    proc.kill("SIGTERM");
+    if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
+  });
 });
 
 // ─── CATCH-ALL → React ────────────────────────────────────────────
