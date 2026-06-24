@@ -10,19 +10,20 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Serve React build (produced by `npm run build` into /build folder)
+// Serve React build
 app.use(express.static(path.join(__dirname, "build")));
 
 // Check if cookies.txt exists
 const COOKIES_PATH = path.join(__dirname, "cookies.txt");
 const hasCookies = fs.existsSync(COOKIES_PATH);
+const PROXY_URL = process.env.PROXY_URL || null;
 
 // ─── DEBUG ────────────────────────────────────────────────────────
 app.get("/api/test", (req, res) => {
   try {
     const version = execSync("yt-dlp --version").toString().trim();
     const ytdlpPath = execSync("which yt-dlp").toString().trim();
-    res.json({ version, path: ytdlpPath, cookies: hasCookies, status: "ok" });
+    res.json({ version, path: ytdlpPath, cookies: hasCookies, proxy: !!PROXY_URL, status: "ok" });
   } catch (e) {
     res.json({ error: e.message, status: "failed" });
   }
@@ -36,9 +37,8 @@ app.post("/api/info", (req, res) => {
   const ytdlp = process.env.YTDLP_PATH || "yt-dlp";
   const args = ["--dump-json", "--no-playlist", "--no-warnings"];
 
-  if (hasCookies) {
-    args.push("--cookies", COOKIES_PATH);
-  }
+  if (hasCookies) args.push("--cookies", COOKIES_PATH);
+  if (PROXY_URL) args.push("--proxy", PROXY_URL);
 
   args.push(url);
 
@@ -102,15 +102,12 @@ app.get("/api/download", (req, res) => {
     "--no-warnings",
   ];
 
-  if (hasCookies) {
-    args.push("--cookies", COOKIES_PATH);
-  }
+  if (hasCookies) args.push("--cookies", COOKIES_PATH);
+  if (PROXY_URL) args.push("--proxy", PROXY_URL);
 
   args.push("--merge-output-format", isAudio ? "mp3" : "mp4", "-o", "-");
 
-  if (isAudio) {
-    args.push("--extract-audio", "--audio-format", "mp3");
-  }
+  if (isAudio) args.push("--extract-audio", "--audio-format", "mp3");
 
   args.push(url);
 
@@ -138,4 +135,5 @@ app.get("*", (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ VidGrab running on port ${PORT}`);
   console.log(`🍪 Cookies: ${hasCookies ? "Found ✅" : "Not found ❌"}`);
+  console.log(`🌐 Proxy: ${PROXY_URL ? "Configured ✅" : "Not set ❌"}`);
 });
