@@ -1,5 +1,5 @@
 const express = require("express");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 const path = require("path");
 const cors = require("cors");
 
@@ -12,13 +12,24 @@ app.use(express.json());
 // Serve React build (produced by `npm run build` into /build folder)
 app.use(express.static(path.join(__dirname, "build")));
 
+// ─── DEBUG ────────────────────────────────────────────────────────
+app.get("/api/test", (req, res) => {
+  try {
+    const version = execSync("yt-dlp --version").toString().trim();
+    const ytdlpPath = execSync("which yt-dlp").toString().trim();
+    res.json({ version, path: ytdlpPath, status: "ok" });
+  } catch (e) {
+    res.json({ error: e.message, status: "failed" });
+  }
+});
+
 // ─── GET VIDEO INFO ───────────────────────────────────────────────
 app.post("/api/info", (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: "URL is required" });
 
+  const ytdlp = process.env.YTDLP_PATH || "yt-dlp";
   const args = ["--dump-json", "--no-playlist", "--no-warnings", url];
-  const ytdlp = process.env.YTDLP_PATH || "/usr/local/bin/yt-dlp";
   const proc = spawn(ytdlp, args);
 
   let stdout = "";
@@ -29,8 +40,9 @@ app.post("/api/info", (req, res) => {
 
   proc.on("close", (code) => {
     if (code !== 0) {
+      console.error("[yt-dlp info error]", stderr);
       return res.status(500).json({
-        error: "Could not fetch video info. The URL may be private or unsupported.",
+        error: `Could not fetch video info: ${stderr || "Unknown error"}`,
       });
     }
     try {
@@ -86,8 +98,8 @@ app.get("/api/download", (req, res) => {
 
   args.push(url);
 
-const ytdlp = process.env.YTDLP_PATH || "/usr/local/bin/yt-dlp";
-const proc = spawn(ytdlp, args);
+  const ytdlp = process.env.YTDLP_PATH || "yt-dlp";
+  const proc = spawn(ytdlp, args);
 
   proc.stdout.pipe(res);
 
