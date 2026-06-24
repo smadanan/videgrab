@@ -2,6 +2,7 @@ const express = require("express");
 const { spawn, execSync } = require("child_process");
 const path = require("path");
 const cors = require("cors");
+const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,12 +13,16 @@ app.use(express.json());
 // Serve React build (produced by `npm run build` into /build folder)
 app.use(express.static(path.join(__dirname, "build")));
 
+// Check if cookies.txt exists
+const COOKIES_PATH = path.join(__dirname, "cookies.txt");
+const hasCookies = fs.existsSync(COOKIES_PATH);
+
 // ─── DEBUG ────────────────────────────────────────────────────────
 app.get("/api/test", (req, res) => {
   try {
     const version = execSync("yt-dlp --version").toString().trim();
     const ytdlpPath = execSync("which yt-dlp").toString().trim();
-    res.json({ version, path: ytdlpPath, status: "ok" });
+    res.json({ version, path: ytdlpPath, cookies: hasCookies, status: "ok" });
   } catch (e) {
     res.json({ error: e.message, status: "failed" });
   }
@@ -29,7 +34,14 @@ app.post("/api/info", (req, res) => {
   if (!url) return res.status(400).json({ error: "URL is required" });
 
   const ytdlp = process.env.YTDLP_PATH || "yt-dlp";
-  const args = ["--dump-json", "--no-playlist", "--no-warnings", url];
+  const args = ["--dump-json", "--no-playlist", "--no-warnings"];
+
+  if (hasCookies) {
+    args.push("--cookies", COOKIES_PATH);
+  }
+
+  args.push(url);
+
   const proc = spawn(ytdlp, args);
 
   let stdout = "";
@@ -88,9 +100,13 @@ app.get("/api/download", (req, res) => {
     "-f", selectedFormat,
     "--no-playlist",
     "--no-warnings",
-    "--merge-output-format", isAudio ? "mp3" : "mp4",
-    "-o", "-",
   ];
+
+  if (hasCookies) {
+    args.push("--cookies", COOKIES_PATH);
+  }
+
+  args.push("--merge-output-format", isAudio ? "mp3" : "mp4", "-o", "-");
 
   if (isAudio) {
     args.push("--extract-audio", "--audio-format", "mp3");
@@ -121,4 +137,5 @@ app.get("*", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`✅ VidGrab running on port ${PORT}`);
+  console.log(`🍪 Cookies: ${hasCookies ? "Found ✅" : "Not found ❌"}`);
 });
