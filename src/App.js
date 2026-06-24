@@ -45,10 +45,9 @@ const styles = `
 
   .tagline {
     color: #6b7280;
-    font-size: 0.95rem;
     margin-top: 8px;
-    letter-spacing: 0.05em;
     text-transform: uppercase;
+    letter-spacing: 0.08em;
     font-size: 0.78rem;
   }
 
@@ -80,7 +79,7 @@ const styles = `
 
   .input-row {
     display: flex;
-    gap: 10px;
+    gap: 8px;
   }
 
   .url-input {
@@ -88,20 +87,22 @@ const styles = `
     background: #0a0a0f;
     border: 1px solid #2d2d4e;
     border-radius: 10px;
-    padding: 14px 16px;
+    padding: 13px 16px;
     color: #e8e6f0;
     font-family: 'Space Mono', monospace;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     outline: none;
     transition: border-color 0.2s;
+    min-width: 0;
   }
 
-  .url-input:focus {
-    border-color: #a78bfa;
-  }
+  .url-input:focus { border-color: #a78bfa; }
+  .url-input::placeholder { color: #3d3d5c; }
 
-  .url-input::placeholder {
-    color: #3d3d5c;
+  .btn-group {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
   }
 
   .btn {
@@ -109,26 +110,44 @@ const styles = `
     color: white;
     border: none;
     border-radius: 10px;
-    padding: 14px 20px;
+    padding: 13px 18px;
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     cursor: pointer;
     transition: opacity 0.2s, transform 0.1s;
     white-space: nowrap;
   }
 
-  .btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+  .btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
   .btn:active:not(:disabled) { transform: translateY(0); }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-clear {
+    background: #1e1e3a;
+    border: 1px solid #2d2d4e;
+    color: #8b8baa;
+    padding: 13px 14px;
+    font-size: 0.82rem;
+  }
+
+  .btn-paste {
+    background: #1a2a1a;
+    border: 1px solid #2d4e2d;
+    color: #4ade80;
+    padding: 13px 14px;
+    font-size: 0.82rem;
+  }
+
+  .btn-paste:hover:not(:disabled) { background: #1f351f; }
 
   .btn-download {
     background: linear-gradient(135deg, #059669, #0ea5e9);
     width: 100%;
-    padding: 16px;
+    padding: 15px;
     font-size: 1rem;
     border-radius: 12px;
-    margin-top: 8px;
+    margin-top: 4px;
   }
 
   .error {
@@ -137,8 +156,9 @@ const styles = `
     border-radius: 10px;
     padding: 12px 16px;
     color: #f87171;
-    font-size: 0.85rem;
-    margin-top: 16px;
+    font-size: 0.82rem;
+    margin-top: 14px;
+    word-break: break-word;
   }
 
   .video-info {
@@ -154,8 +174,8 @@ const styles = `
   }
 
   .thumbnail {
-    width: 120px;
-    height: 68px;
+    width: 130px;
+    height: 74px;
     object-fit: cover;
     border-radius: 8px;
     border: 1px solid #2d2d4e;
@@ -164,8 +184,8 @@ const styles = `
   }
 
   .thumbnail-placeholder {
-    width: 120px;
-    height: 68px;
+    width: 130px;
+    height: 74px;
     background: #1a1a2e;
     border-radius: 8px;
     border: 1px solid #2d2d4e;
@@ -191,7 +211,7 @@ const styles = `
 
   .meta-chips {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
   }
 
@@ -212,11 +232,11 @@ const styles = `
   }
 
   .format-label {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     color: #6b7280;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     font-family: 'Space Mono', monospace;
   }
 
@@ -241,11 +261,7 @@ const styles = `
   }
 
   .format-btn:hover { border-color: #7c3aed; color: #e8e6f0; }
-  .format-btn.selected {
-    border-color: #7c3aed;
-    background: #1e1340;
-    color: #a78bfa;
-  }
+  .format-btn.selected { border-color: #7c3aed; background: #1e1340; color: #a78bfa; }
 
   .loading {
     text-align: center;
@@ -256,48 +272,48 @@ const styles = `
 
   .spinner {
     display: inline-block;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     border: 2px solid #2d2d4e;
     border-top-color: #a78bfa;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
-    margin-right: 10px;
+    margin-right: 8px;
     vertical-align: middle;
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .download-progress {
-    background: #0a0a12;
-    border: 1px solid #1e1e3a;
+  .download-status {
+    background: #0d1a2d;
+    border: 1px solid #1e3a5f;
     border-radius: 10px;
-    padding: 16px;
-    margin-top: 16px;
+    padding: 14px 16px;
+    margin-top: 12px;
     text-align: center;
-    color: #6b7280;
+    color: #60a5fa;
     font-size: 0.85rem;
   }
 
   .progress-bar-wrap {
     background: #1a1a2e;
     border-radius: 4px;
-    height: 4px;
-    margin-top: 12px;
+    height: 3px;
+    margin-top: 10px;
     overflow: hidden;
   }
 
   .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #7c3aed, #3b82f6);
+    background: linear-gradient(90deg, #7c3aed, #3b82f6, #34d399);
     border-radius: 4px;
-    animation: progress-pulse 1.5s ease-in-out infinite;
+    animation: progress-slide 2s ease-in-out infinite;
+    width: 40%;
   }
 
-  @keyframes progress-pulse {
-    0% { width: 10%; }
-    50% { width: 80%; }
-    100% { width: 95%; }
+  @keyframes progress-slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
   }
 
   .success-msg {
@@ -307,8 +323,31 @@ const styles = `
     padding: 14px 16px;
     color: #4ade80;
     font-size: 0.85rem;
-    margin-top: 16px;
+    margin-top: 12px;
     text-align: center;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e1e3a;
+    border: 1px solid #a78bfa;
+    color: #a78bfa;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    animation: fadeInOut 2.5s forwards;
+    z-index: 1000;
+    white-space: nowrap;
+  }
+
+  @keyframes fadeInOut {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+    75%  { opacity: 1; }
+    100% { opacity: 0; }
   }
 
   .footer {
@@ -319,12 +358,14 @@ const styles = `
     font-family: 'Space Mono', monospace;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 520px) {
     .logo { font-size: 2rem; }
     .card { padding: 20px; }
     .input-row { flex-direction: column; }
+    .btn-group { justify-content: stretch; }
+    .btn-group .btn { flex: 1; }
     .video-meta { flex-direction: column; }
-    .thumbnail, .thumbnail-placeholder { width: 100%; height: 160px; }
+    .thumbnail, .thumbnail-placeholder { width: 100%; height: 180px; }
   }
 `;
 
@@ -336,11 +377,40 @@ export default function App() {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [toast, setToast] = useState("");
 
   const API_BASE = process.env.NODE_ENV === "production" ? "" : "http://localhost:3001";
 
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 2500);
+  };
+
+  const handleClear = () => {
+    setUrl("");
+    setInfo(null);
+    setError("");
+    setSuccess("");
+    setSelectedFormat(null);
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setUrl(text.trim());
+        showToast("✓ Pasted from clipboard");
+      } else {
+        showToast("Clipboard is empty");
+      }
+    } catch (e) {
+      showToast("Clipboard access denied — paste manually");
+    }
+  };
+
   const fetchInfo = async () => {
-    if (!url.trim()) return;
+    const trimmed = url.trim();
+    if (!trimmed) return;
     setLoading(true);
     setError("");
     setInfo(null);
@@ -351,7 +421,7 @@ export default function App() {
       const res = await fetch(`${API_BASE}/api/info`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ url: trimmed }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch info");
@@ -379,18 +449,29 @@ export default function App() {
 
     const downloadUrl = `${API_BASE}/api/download?${params.toString()}`;
 
-    // Trigger browser download
-    const a = document.createElement("a");
-    a.href = downloadUrl;
-    a.download = `${info.title}.${selectedFormat.ext}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    setTimeout(() => {
-      setDownloading(false);
-      setSuccess(`"${info.title}" is downloading to your device.`);
-    }, 3000);
+    // Use fetch to detect errors before triggering browser download
+    fetch(downloadUrl)
+      .then((res) => {
+        if (!res.ok) return res.json().then(d => { throw new Error(d.error || "Download failed") });
+        return res.blob();
+      })
+      .then((blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `${info.title}.${selectedFormat.ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        setSuccess(`"${info.title}" downloaded successfully!`);
+      })
+      .catch((e) => {
+        setError(e.message);
+      })
+      .finally(() => {
+        setDownloading(false);
+      });
   };
 
   const platformIcon = info ? (PLATFORM_ICONS[info.platform] || "⬇") : "";
@@ -419,9 +500,17 @@ export default function App() {
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && fetchInfo()}
             />
-            <button className="btn" onClick={fetchInfo} disabled={loading || !url.trim()}>
-              {loading ? <span className="spinner" /> : "Fetch"}
-            </button>
+            <div className="btn-group">
+              <button className="btn btn-paste" onClick={handlePaste} title="Paste from clipboard">
+                📋 Paste
+              </button>
+              <button className="btn btn-clear" onClick={handleClear} title="Clear">
+                ✕
+              </button>
+              <button className="btn" onClick={fetchInfo} disabled={loading || !url.trim()}>
+                {loading ? <><span className="spinner" />Fetching...</> : "Fetch"}
+              </button>
+            </div>
           </div>
 
           {error && <div className="error">⚠ {error}</div>}
@@ -468,16 +557,15 @@ export default function App() {
                 onClick={handleDownload}
                 disabled={downloading || !selectedFormat}
               >
-                {downloading ? (
-                  <><span className="spinner" /> Preparing download...</>
-                ) : (
-                  `⬇ Download ${selectedFormat?.ext?.toUpperCase() || ""}`
-                )}
+                {downloading
+                  ? <><span className="spinner" />Processing... please wait</>
+                  : `⬇ Download ${selectedFormat?.label || ""}`
+                }
               </button>
 
               {downloading && (
-                <div className="download-progress">
-                  Streaming video... your browser download will start shortly.
+                <div className="download-status">
+                  Downloading and preparing your file — this may take a minute for large videos.
                   <div className="progress-bar-wrap">
                     <div className="progress-bar" />
                   </div>
@@ -489,10 +577,10 @@ export default function App() {
           )}
         </div>
 
-        <div className="footer">
-          powered by yt-dlp · built for personal use
-        </div>
+        <div className="footer">powered by yt-dlp · for personal use</div>
       </div>
+
+      {toast && <div className="toast">{toast}</div>}
     </>
   );
 }
