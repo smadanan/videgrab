@@ -16,6 +16,18 @@ const COOKIES_PATH = path.join(__dirname, "cookies.txt");
 const hasCookies = fs.existsSync(COOKIES_PATH);
 const PROXY_URL = process.env.PROXY_URL || null;
 
+// ─── HELPER: sanitize filename ─────────────────────────────────────
+function sanitizeTitle(title) {
+  return (title || "video")
+    .replace(/[^\w\s\-]/gi, "")   // remove special chars (emojis, ·, etc.)
+    .replace(/\s+/g, "_")          // spaces to underscores
+    .replace(/_+/g, "_")           // collapse multiple underscores
+    .replace(/^_|_$/g, "")         // trim leading/trailing underscores
+    .substring(0, 100)             // max 100 chars
+    .replace(/_$/g, "")            // clean trailing underscore after cut
+    || "video";                    // fallback if result is empty
+}
+
 // ─── DEBUG ─────────────────────────────────────────────────────────
 app.get("/api/test", (req, res) => {
   try {
@@ -83,10 +95,9 @@ app.get("/api/download", (req, res) => {
 
   const fileExt = ext || "mp4";
   const isAudio = fileExt === "mp3";
-  const safeTitle = (title || "video").replace(/[^\w\s\-]/gi, "_").trim();
+  const safeTitle = sanitizeTitle(title);
   const fileName = `${safeTitle}.${fileExt}`;
   const tmpFile = path.join(os.tmpdir(), `vidgrab_${Date.now()}`);
-  // yt-dlp will add the correct extension itself
   const tmpOutput = `${tmpFile}.${fileExt}`;
 
   let args = [];
@@ -133,22 +144,19 @@ app.get("/api/download", (req, res) => {
       return;
     }
 
-    // Find the actual output file (yt-dlp sometimes changes extension)
+    // Find actual output file (yt-dlp may change extension)
     let actualFile = tmpOutput;
     if (!fs.existsSync(actualFile)) {
       const dir = os.tmpdir();
       const base = path.basename(tmpFile);
       const found = fs.readdirSync(dir).find(f => f.startsWith(base));
-      if (found) {
-        actualFile = path.join(dir, found);
-      } else {
-        return res.status(500).json({ error: "Output file not found after download." });
-      }
+      if (found) actualFile = path.join(dir, found);
+      else return res.status(500).json({ error: "Output file not found after download." });
     }
 
     const stat = fs.statSync(actualFile);
     const sizeMB = (stat.size / 1024 / 1024).toFixed(2);
-    console.log(`[download] complete: ${actualFile} (${sizeMB} MB)`);
+    console.log(`[download] complete: ${fileName} (${sizeMB} MB)`);
 
     if (stat.size === 0) {
       cleanupFile(actualFile);
