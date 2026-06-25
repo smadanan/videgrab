@@ -290,30 +290,15 @@ const styles = `
     border-radius: 10px;
     padding: 14px 16px;
     margin-top: 12px;
-    text-align: center;
     color: #60a5fa;
     font-size: 0.85rem;
+    line-height: 1.5;
   }
 
-  .progress-bar-wrap {
-    background: #1a1a2e;
-    border-radius: 4px;
-    height: 3px;
-    margin-top: 10px;
-    overflow: hidden;
-  }
-
-  .progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #7c3aed, #3b82f6, #34d399);
-    border-radius: 4px;
-    animation: progress-slide 2s ease-in-out infinite;
-    width: 40%;
-  }
-
-  @keyframes progress-slide {
-    0%   { transform: translateX(-100%); }
-    100% { transform: translateX(300%); }
+  .download-status .status-icon {
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+    display: block;
   }
 
   .success-msg {
@@ -392,6 +377,7 @@ export default function App() {
     setError("");
     setSuccess("");
     setSelectedFormat(null);
+    setDownloading(false);
   };
 
   const handlePaste = async () => {
@@ -416,6 +402,7 @@ export default function App() {
     setInfo(null);
     setSuccess("");
     setSelectedFormat(null);
+    setDownloading(false);
 
     try {
       const res = await fetch(`${API_BASE}/api/info`, {
@@ -449,29 +436,21 @@ export default function App() {
 
     const downloadUrl = `${API_BASE}/api/download?${params.toString()}`;
 
-    // Use fetch to detect errors before triggering browser download
-    fetch(downloadUrl)
-      .then((res) => {
-        if (!res.ok) return res.json().then(d => { throw new Error(d.error || "Download failed") });
-        return res.blob();
-      })
-      .then((blob) => {
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = `${info.title}.${selectedFormat.ext}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-        setSuccess(`"${info.title}" downloaded successfully!`);
-      })
-      .catch((e) => {
-        setError(e.message);
-      })
-      .finally(() => {
-        setDownloading(false);
-      });
+    // Direct browser download — no blob buffering
+    // Server downloads to temp file first, then streams
+    // Browser shows native download progress bar
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = `${info.title}.${selectedFormat.ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Show status message — reset after reasonable time
+    setTimeout(() => {
+      setDownloading(false);
+      setSuccess("✓ Download started! Check your browser's download bar.");
+    }, 4000);
   };
 
   const platformIcon = info ? (PLATFORM_ICONS[info.platform] || "⬇") : "";
@@ -558,21 +537,19 @@ export default function App() {
                 disabled={downloading || !selectedFormat}
               >
                 {downloading
-                  ? <><span className="spinner" />Processing... please wait</>
+                  ? <><span className="spinner" />Preparing download...</>
                   : `⬇ Download ${selectedFormat?.label || ""}`
                 }
               </button>
 
               {downloading && (
                 <div className="download-status">
-                  Downloading and preparing your file — this may take a minute for large videos.
-                  <div className="progress-bar-wrap">
-                    <div className="progress-bar" />
-                  </div>
+                  <span className="status-icon">⏳</span>
+                  Server is processing your video. Once ready your browser's download bar will appear automatically — this may take 30–60 seconds for longer videos. Do not close this tab.
                 </div>
               )}
 
-              {success && <div className="success-msg">✓ {success}</div>}
+              {success && <div className="success-msg">{success}</div>}
             </div>
           )}
         </div>
